@@ -13,14 +13,14 @@ return [
     'bootstrap' => [
         'log',
         //全局内容协商
-//        [
-//            //ContentNegotiator 类可以分析request的header然后指派所需的响应格式给客户端，不需要我们人工指定
-//            'class'     => 'yii\filters\ContentNegotiator',
-//            'formats' => [
-//                'application/json' => yii\web\Response::FORMAT_JSON,
-//                //  'application/xml' => yii\web\Response::FORMAT_XML,
-//            ],
-//        ]
+        [
+            //ContentNegotiator 类可以分析request的header然后指派所需的响应格式给客户端，不需要我们人工指定
+            'class'     => 'yii\filters\ContentNegotiator',
+            'formats' => [
+                'application/json' => yii\web\Response::FORMAT_JSON,
+                //  'application/xml' => yii\web\Response::FORMAT_XML,
+            ],
+        ]
     ],
     'modules' => [
         'admin' => [
@@ -32,9 +32,6 @@ return [
                     'usernameField'=>'username',
                     'searchClass'=>'api\models\AdminUserSearch'
                 ],
-                /*'user'=>[
-                    'class'=>'backend\controllers\UserController'
-                ]*/
             ]
         ],
 
@@ -58,9 +55,30 @@ return [
             'enableSession' => false,
            // 'identityCookie' => ['name' => '_identity-backend'],
         ],
+        'response' => [
+            'class' => 'yii\web\Response',
+            'on beforeSend' => function ($event) {
+    // RUANXINWU
+                $response = $event->sender;
+                if(!$response->isSuccessful){
+
+                    $data=[];
+                    $data['code']=\api\exceptions\ApiException::ERROR;
+                    $data['msg']=\api\exceptions\ApiException::$errorMessage[\api\exceptions\ApiException::ERROR];
+                    PD($response->data);
+                    if(YII_ENV=='prod'){//正式环境
+                        $data['data']=new \stdClass();
+                    }else{
+                        $data['data']=$response->data;
+                    }
+
+                    $response->data=$data;
+                }
+            },
+        ],
         'urlManager' => [
             'enablePrettyUrl' => true,      // 美化URL
-            //'enableStrictParsing' => true,  //启用严格解析,ture启用，启用后下面的rules是规则
+            'enableStrictParsing' => true,  //启用严格解析,ture启用，启用后下面的rules是规则
             'showScriptName' => true,      // 隐藏index.php
            // 'suffix' => '.htmjl',            // 设置后缀.html
             'rules' => [
